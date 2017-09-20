@@ -1,6 +1,8 @@
 keybase-unofficial-local
 ========================
 
+[![Gem Version](https://badge.fury.io/rb/keybase-unofficial-local.svg)](https://badge.fury.io/rb/keybase-unofficial-local)
+
 An unofficial Ruby library for interacting with a local Keybase installation.
 
 ### Installation
