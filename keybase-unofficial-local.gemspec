@@ -17,5 +17,5 @@ Gem::Specification.new do |s|
   s.homepage              = "https://github.com/woodruffw/keybase-unofficial-local"
   s.license               = "MIT"
 
-  s.add_runtime_dependency "keybase-unofficial-core", "~> 1.0"
+  s.add_runtime_dependency "keybase-unofficial-core", "~> 0"
 end
