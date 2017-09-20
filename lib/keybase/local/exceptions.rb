@@ -2,7 +2,7 @@
 
 module Keybase
   module Local
-    # A namespace for all exceptions defined by {Keybase}.
+    # A namespace for all exceptions defined by {Keybase::Local}.
     module Exceptions
       # Raised if a Keybase installation can't be found.
       class KeybaseNotInstalledError < Core::Exceptions::KeybaseError
