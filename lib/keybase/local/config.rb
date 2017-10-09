@@ -50,6 +50,8 @@ module Keybase
       def running?
         if Gem.win_platform?
           !`tasklist | find "keybase.exe"`.empty?
+        elsif /darwin/.match? RUBY_PLATFORM
+          !`pgrep keybase`.empty?
         else
           # is there a more efficient way to do this that doesn't involve an exec?
           Dir["/proc/[0-9]*/comm"].any? do |comm|
