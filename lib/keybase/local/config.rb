@@ -9,6 +9,8 @@ module Keybase
       # The Keybase configuration directory.
       CONFIG_DIR = if Gem.win_platform?
                      File.expand_path("#{ENV["LOCALAPPDATA"]}/Keybase").freeze
+                   elsif /darwin/.match?(RUBY_PLATFORM)
+                     File.expand_path("~/Library/Application Support/Keybase").freeze
                    else
                      File.expand_path("~/.config/keybase").freeze
                    end
