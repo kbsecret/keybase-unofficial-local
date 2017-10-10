@@ -9,6 +9,8 @@ module Keybase
       # The Keybase configuration directory.
       CONFIG_DIR = if Gem.win_platform?
                      File.expand_path("#{ENV["LOCALAPPDATA"]}/Keybase").freeze
+                   elsif RUBY_PLATFORM =~ /darwin/
+                     File.expand_path("~/Library/Application Support/Keybase").freeze
                    else
                      File.expand_path("~/.config/keybase").freeze
                    end
@@ -50,7 +52,7 @@ module Keybase
       def running?
         if Gem.win_platform?
           !`tasklist | find "keybase.exe"`.empty?
-        elsif /darwin/ =~ RUBY_PLATFORM
+        elsif RUBY_PLATFORM =~ /darwin/
           !`pgrep keybase`.empty?
         else
           # is there a more efficient way to do this that doesn't involve an exec?
