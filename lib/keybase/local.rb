@@ -14,7 +14,7 @@ module Keybase
   # The namespace for `keybase-unofficial-local`.
   module Local
     # The current version of `keybase-unofficial-local`.
-    VERSION = "0.1.1"
+    VERSION = "0.2.0"
 
     extend Config
   end
