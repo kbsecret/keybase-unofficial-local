@@ -20,7 +20,7 @@ module Keybase
           if Gem.win_platform?
             !`tasklist | find "kbfsfuse.exe"`.empty?
           elsif RUBY_PLATFORM =~ /darwin/
-            !`pgrep kbfsfuse`.empty?
+            !`pgrep kbfs`.empty?
           else
             Dir["/proc/[0-9]*/comm"].any? do |comm|
               File.read(comm).chomp == "kbfsfuse" rescue false
