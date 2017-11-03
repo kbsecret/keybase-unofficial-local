@@ -2,138 +2,147 @@
 
 require "open3"
 require "json"
+require "ostruct"
 
 module Keybase
   module Local
-    # Represents an interface to Keybase's teams.
+    # Represents Keybase's JSON team API.
     module Team
       # The initial arguments to pass when executing Keybase for team management.
-      TEAM_EXEC_ARGS = %w[keybase team].freeze
-
-      # The pattern used to (partially) validate team names.
-      # @see https://github.com/keybase/client/blob/5aa02d1b351f0dfab050eb5ae22bffdf59f61d91/go/protocol/keybase1/extras.go#L1560
-      TEAM_PATTERN = /([a-zA-Z0-9][a-zA-Z0-9_]?)+/
+      TEAM_EXEC_ARGS = %w[keybase team api].freeze
 
       class << self
-        # @param args [Array<String>] additional arguments to pass to `keybase team`
-        # @param payload [String, nil] input data to feed to the invocation
-        # @param json [Boolean] whether or not to parse `stdout` as JSON
-        # @return [Hash, Boolean, nil] the parsed JSON, or a true/false/nil result indicating
-        #   command success
+        # @param meth [Symbol] the team method
+        # @param options [Hash] the options hash
+        # @return [String] the JSON serialized envelope
         # @api private
-        def team_call(*args, payload: nil, json: false)
-          if json
-            response = Open3.popen3(*TEAM_EXEC_ARGS, *args) do |stdin, stdout, _, _|
-              stdin.write payload if payload
-              stdin.close # close after writing to let keybase know we're done
-              stdout.read
-            end
+        def envelope(meth, options: {})
+          {
+            method: meth,
+            params: {
+              options: options,
+            },
+          }.to_json
+        end
 
-            if response.empty?
-              {}
-            else
-              JSON.parse response
-            end
-          else
-            system(*TEAM_EXEC_ARGS, *args)
+        # Makes team API calls.
+        # @param meth [String, Symbol] the team method
+        # @param options [Hash] the options hash
+        # @return [OpenStruct] a struct mapping on the JSON response
+        # @api private
+        def team_call(meth, options: {})
+          response = Open3.popen3(*TEAM_EXEC_ARGS) do |stdin, stdout, _, _|
+            stdin.write envelope meth, options: options
+            stdin.close
+            stdout.read
           end
+
+          JSON.parse response, object_class: OpenStruct
         end
 
-        # Create a new Keybase team.
-        # @note This is a stub.
-        # @api private
-        def create(_team)
-          # stub
+        # List all team memberships for the current user.
+        # @return [OpenStruct] a struct mapping of the JSON response
+        def list_self_memberships
+          team_call "list-self-memberships"
         end
 
-        # Add a user to a Keybase team.
-        # @note This is a stub.
-        # @api private
-        def add_member(_team, _user, _role: :reader, _email: false)
-          # stub
+        alias self_memberships list_self_memberships
+
+        # List all users in the given team.
+        # @param team [String] the team to list
+        # @return [OpenStruct] a struct mapping of the JSON response
+        def list_team_memberships(team)
+          team_call "list-team-memberships", options: {
+            team: team,
+          }
         end
 
-        # Remove a user from a Keybase team.
-        # @note This is a stub.
-        # @api private
-        def remove_member(_team, _user)
-          # stub
+        alias team_memberships list_team_memberships
+
+        # List teams for a user.
+        # @param user [String] a Keybase username
+        # @return [OpenStruct] a struct mapping of the JSON response
+        def list_user_memberships(user)
+          team_call "list-user-memberships", options: {
+            username: user,
+          }
         end
 
-        # Modify a user in a Keybase team.
-        # @note This is a stub.
-        # @api private
-        def edit_member(_team, _user, _role: :reader)
-          # stub
+        alias user_memberships list_user_memberships
+
+        # Create a new team.
+        # @param team [String] the team name
+        # @return [OpenStruct] a struct mapping of the JSON response
+        def create_team(team)
+          team_call "create-team", options: {
+            team: team,
+          }
         end
 
-        # List all teams currently belonged to.
-        # @param force_poll [Boolean] whether or not to force a poll of the server for all idents
-        # @return [Hash] a hash representation of all teams currently belonged to
-        def list_memberships(force_poll: false)
-          args = %w[list-memberships --json]
-          args << "--force-poll" if force_poll
-
-          team_call(*args, json: true)
+        # Add members to a team.
+        # @param team [String] the team name
+        # @param emails [Array<Hash>] a list of email-role hashes to add to the team
+        # @param users [Array<Hash>] a list of Keybase user-role hashes to add to the team
+        # @return [OpenStruct] a struct mapping of the JSON response
+        # @example
+        #  Keybase::Local::Team.add_members "foo", users: [{ username: "bob", role: "reader" }]
+        #  Keybase::Local::Team.add_members "bar", emails: [{ email: "foo@bar.com", role: "admin" }]
+        def add_members(team, emails: [], users: [])
+          team_call "add-members", options: {
+            team: team,
+            emails: emails,
+            usernames: users,
+          }
         end
 
-        # List all members of the given team.
-        # @param force_poll [Boolean] whether or not to force a poll of the server for all idents
-        # @return [Hash] a hash representation of all members of the given team
-        def list_members(team, force_poll: false)
-          args = %W[list-members #{team} --json]
-          args << "--force-poll" if force_poll
-
-          team_call(*args, json: true)
+        # Edit the role of a user on a team.
+        # @param team [String] the team name
+        # @param user [String] the Keybase user to edit
+        # @param role [String] the user's new role
+        # @return [OpenStruct] a struct mapping of the JSON response
+        # @example
+        #  Keybase::Local::Team.edit_member "foo", "bob", "reader"
+        def edit_member(team, user, role)
+          team_call "edit-member", options: {
+            team: team,
+            username: user,
+            role: role,
+          }
         end
 
-        # Change the name of a Keybase team.
-        # @note This is a stub.
-        # @api private
-        def rename(_old_team, _new_team)
-          # stub
+        # Remove a user from a team.
+        # @param team [String] the team name
+        # @param user [String] the Keybase user to remove
+        # @return [OpenStruct] a struct mapping of the JSON response
+        def remove_member(team, user)
+          team_call "remove-member", options: {
+            team: team,
+            username: user,
+          }
         end
 
-        # Request access to a Keybase team.
-        # @note This is a stub.
-        # @api private
-        def request_access(_team)
-          # stub
+        # Rename a subteam.
+        # @param old_name [String] the subteam's current name
+        # @param new_name [String] the subteam's new name
+        # @return [OpenStruct] a struct mapping of the JSON response
+        # @example
+        #  Keybase::Local::Team.rename_subteam "foo.bar", "foo.baz"
+        def rename_subteam(old_name, new_name)
+          team_call "rename-subteam", options: {
+            team: old_name,
+            "new-team-name": new_name,
+          }
         end
 
-        # List requests to join Keybase teams.
-        # @note This is a stub.
-        # @api private
-        def list_requests
-          # stub
-        end
-
-        # Ignore a request to join a Keybase team.
-        # @note This is a stub.
-        # @api private
-        def ignore_request(_team, _user)
-          # stub
-        end
-
-        # Accept an email invitation to join a Keybase team.
-        # @note This is a stub.
-        # @api private
-        def accept_invite(_token)
-          # stub
-        end
-
-        # Leave a Keybase team.
-        # @note This is a stub.
-        # @api private
-        def leave(_team, _permanent: false)
-          # stub
-        end
-
-        # Delete a Keybase team.
-        # @note This is a stub.
-        # @api private
-        def delete(_team)
-          # stub
+        # Leave a team.
+        # @param team [String] the team name
+        # @param permanent [Boolean] whether or not to leave the team permanently
+        # @return [OpenStruct] a struct mapping of the JSON response
+        def leave_team(team, permanent: false)
+          team_call "leave-team", options: {
+            team: team,
+            permanent: permanent,
+          }
         end
       end
     end
