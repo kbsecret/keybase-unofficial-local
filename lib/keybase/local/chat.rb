@@ -25,12 +25,14 @@ module Keybase
           }.to_json
         end
 
-        # @param payload [String] the JSON payload to send to the chat API
+        # Makes chat API calls.
+        # @param meth [String, Symbol] the team method
+        # @param options [Hash] the options hash
         # @return [OpenStruct] a struct mapping of the JSON response
         # @api private
-        def chat_call(payload)
+        def chat_call(meth, options: {})
           response = Open3.popen3(*CHAT_EXEC_ARGS) do |stdin, stdout, _, _|
-            stdin.write payload
+            stdin.write envelope meth, options: options
             stdin.close # close after writing to let keybase know we're done
             stdout.read
           end
@@ -38,15 +40,13 @@ module Keybase
           JSON.parse response, object_class: OpenStruct
         end
 
-        # List the user's inbox.
+        # List the current user's inbox.
         # @param topic_type [String] the topic type to list by
         # @return [OpenStruct] a struct mapping of the JSON response
         def list_inbox(topic_type: nil)
-          payload = envelope :list, options: {
+          chat_call :list, options: {
             topic_type: topic_type,
           }
-
-          chat_call payload
         end
 
         # Read a conversation.
@@ -55,15 +55,13 @@ module Keybase
         # @param unread_only [Boolean] whether to fetch unread messages only
         # @return [OpenStruct] a struct mapping of the JSON response
         def conversation(users, peek: false, unread_only: false)
-          payload = envelope :read, options: {
+          chat_call :read, options: {
             channel: {
               name: Core::U[*users],
             },
             peek: peek,
             unread_only: unread_only,
           }
-
-          chat_call payload
         end
 
         # Send a message to a conversation.
@@ -72,7 +70,7 @@ module Keybase
         # @param public [Boolean] whether to send the message to a public channel
         # @return [OpenStruct] a struct mapping of the JSON response
         def send_message(users, message, public: false)
-          payload = envelope :send, options: {
+          chat_call :send, options: {
             channel: {
               name: Core::U[*users],
               public: public,
@@ -81,8 +79,6 @@ module Keybase
               body: message,
             },
           }
-
-          chat_call payload
         end
 
         # Delete a message from a conversation.
@@ -90,14 +86,12 @@ module Keybase
         # @param id [Integer] the id of the message to delete
         # @return [OpenStruct] a struct mapping of the JSON response
         def delete_message(users, id)
-          payload = envelope :delete, options: {
+          chat_call :delete, options: {
             channel: {
               name: Core::U[*users],
             },
             message_id: id,
           }
-
-          chat_call payload
         end
 
         # Edit a message in a conversation.
@@ -106,7 +100,7 @@ module Keybase
         # @param message [String] the message to send
         # @return [OpenStruct] a struct mapping of the JSON response
         def edit_message(users, id, message)
-          payload = envelope :edit, options: {
+          chat_call :edit, options: {
             channel: {
               name: Core::U[*users],
             },
@@ -115,8 +109,6 @@ module Keybase
               body: message,
             },
           }
-
-          chat_call payload
         end
 
         # Upload a file to a conversation.
@@ -125,15 +117,13 @@ module Keybase
         # @param title [String] the uploaded file's title
         # @return [OpenStruct] a struct mapping of the JSON response
         def upload_attachment(users, path, title)
-          payload = envelope :attach, options: {
+          chat_call :attach, options: {
             channel: {
               name: Core::U[*users],
             },
             filename: path,
             title: title,
           }
-
-          chat_call payload
         end
 
         # Download a file from a conversation.
@@ -142,15 +132,13 @@ module Keybase
         # @param path [String] the pathname to download to
         # @return [OpenStruct] a struct mapping of the JSON response
         def download_attachment(users, id, path)
-          payload = envelope :download, options: {
+          chat_call :download, options: {
             channel: {
               name: Core::U[*users],
             },
             message_id: id,
             output: path,
           }
-
-          chat_call payload
         end
 
         # Make a conversation as read up to a specific ID.
@@ -158,28 +146,24 @@ module Keybase
         # @param id [Integer] the id of the message to mark up to
         # @return [OpenStruct] a struct mapping of the JSON response
         def mark_conversation(users, id)
-          payload = envelope :mark, options: {
+          chat_call :mark, options: {
             channel: {
               name: Core::U[*users],
             },
             message_id: id,
           }
-
-          chat_call payload
         end
 
         # Mute a conversation.
         # @param users [Array<String>] a list of the users in the conversation
         # @return [OpenStruct] a struct mapping of the JSON response
         def mute_conversation(users)
-          payload = envelope :setstatus, options: {
+          chat_call :setstatus, options: {
             channel: {
               name: Core::U[*users],
             },
             status: "muted",
           }
-
-          chat_call payload
         end
       end
     end
