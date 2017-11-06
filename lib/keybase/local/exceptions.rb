@@ -24,6 +24,14 @@ module Keybase
           super "KBFS needs to be enabled and running"
         end
       end
+
+      # Raised whenever a {Keybase::Local::Chat} call fails.
+      class ChatError < Core::Exceptions::KeybaseError
+        # @param message [String] the error message returned by the API
+        def initialize(message)
+          super message
+        end
+      end
     end
   end
 end
