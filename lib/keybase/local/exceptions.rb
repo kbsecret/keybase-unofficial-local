@@ -32,6 +32,14 @@ module Keybase
           super message
         end
       end
+
+      # Raised whenever a {Keybase::Local::Team} call fails.
+      class TeamError < Core::Exceptions::KeybaseError
+        # @param message [String] the error message returned by the API
+        def initialize(message)
+          super message
+        end
+      end
     end
   end
 end

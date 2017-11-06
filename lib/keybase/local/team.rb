@@ -25,6 +25,17 @@ module Keybase
           }.to_json
         end
 
+        # Cleans up the object returned by {team_call}.
+        # @param struct [OpenStruct] a structified response from the Keybase team API
+        # @return [OpenStruct] an unwrapped version of the response
+        # @raise [Exceptions::TeamError] when the struct contains an error message
+        # @api private
+        def unwrap(struct)
+          raise Exceptions::TeamError, struct.error.message if struct.error
+
+          struct.result
+        end
+
         # Makes team API calls.
         # @param meth [String, Symbol] the team method
         # @param options [Hash] the options hash
@@ -37,11 +48,12 @@ module Keybase
             stdout.read
           end
 
-          JSON.parse response, object_class: OpenStruct
+          unwrap JSON.parse response, object_class: OpenStruct
         end
 
         # List all team memberships for the current user.
         # @return [OpenStruct] a struct mapping of the JSON response
+        # @raise [Exceptions::TeamError] if the team call fails
         def list_self_memberships
           team_call "list-self-memberships"
         end
@@ -51,6 +63,7 @@ module Keybase
         # List all users in the given team.
         # @param team [String] the team to list
         # @return [OpenStruct] a struct mapping of the JSON response
+        # @raise [Exceptions::TeamError] if the team call fails
         def list_team_memberships(team)
           team_call "list-team-memberships", options: {
             team: team,
@@ -62,6 +75,7 @@ module Keybase
         # List teams for a user.
         # @param user [String] a Keybase username
         # @return [OpenStruct] a struct mapping of the JSON response
+        # @raise [Exceptions::TeamError] if the team call fails
         def list_user_memberships(user)
           team_call "list-user-memberships", options: {
             username: user,
@@ -73,6 +87,7 @@ module Keybase
         # Create a new team.
         # @param team [String] the team name
         # @return [OpenStruct] a struct mapping of the JSON response
+        # @raise [Exceptions::TeamError] if the team call fails
         def create_team(team)
           team_call "create-team", options: {
             team: team,
@@ -84,6 +99,7 @@ module Keybase
         # @param emails [Array<Hash>] a list of email-role hashes to add to the team
         # @param users [Array<Hash>] a list of Keybase user-role hashes to add to the team
         # @return [OpenStruct] a struct mapping of the JSON response
+        # @raise [Exceptions::TeamError] if the team call fails
         # @example
         #  Keybase::Local::Team.add_members "foo", users: [{ username: "bob", role: "reader" }]
         #  Keybase::Local::Team.add_members "bar", emails: [{ email: "foo@bar.com", role: "admin" }]
@@ -100,6 +116,7 @@ module Keybase
         # @param user [String] the Keybase user to edit
         # @param role [String] the user's new role
         # @return [OpenStruct] a struct mapping of the JSON response
+        # @raise [Exceptions::TeamError] if the team call fails
         # @example
         #  Keybase::Local::Team.edit_member "foo", "bob", "reader"
         def edit_member(team, user, role)
@@ -114,6 +131,7 @@ module Keybase
         # @param team [String] the team name
         # @param user [String] the Keybase user to remove
         # @return [OpenStruct] a struct mapping of the JSON response
+        # @raise [Exceptions::TeamError] if the team call fails
         def remove_member(team, user)
           team_call "remove-member", options: {
             team: team,
@@ -125,6 +143,7 @@ module Keybase
         # @param old_name [String] the subteam's current name
         # @param new_name [String] the subteam's new name
         # @return [OpenStruct] a struct mapping of the JSON response
+        # @raise [Exceptions::TeamError] if the team call fails
         # @example
         #  Keybase::Local::Team.rename_subteam "foo.bar", "foo.baz"
         def rename_subteam(old_name, new_name)
@@ -138,6 +157,7 @@ module Keybase
         # @param team [String] the team name
         # @param permanent [Boolean] whether or not to leave the team permanently
         # @return [OpenStruct] a struct mapping of the JSON response
+        # @raise [Exceptions::TeamError] if the team call fails
         def leave_team(team, permanent: false)
           team_call "leave-team", options: {
             team: team,
