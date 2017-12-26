@@ -2,6 +2,7 @@
 
 require "json"
 require "ostruct"
+require "sys/filesystem"
 
 module Keybase
   module Local
@@ -29,20 +30,25 @@ module Keybase
         end
 
         # @return [Boolean] whether or not KBFS is currently mounted
-        # @note The criteria for being mounted is as follows:
+        # @note {mounted?} does *not* mean that KBFS is fully functional. For that, see
+        #  {functional?}
+        def mounted?
+          Sys::Filesystem.mounts.any? { |m| m.mount_point == Config::KBFS_MOUNT }
+        end
+
+        # @return [Boolean] whether or not KBFS is currently fully functional
+        # @note The criteria for being "functional" is as follows:
         #  1. Keybase is running
         #  2. KBFS is running
-        #  3. {KBFS_STATUS_FILE} exists
-        def mounted?
-          return false unless Local.running?
-          return false unless running?
-          File.exist? KBFS_STATUS_FILE
+        #  3. {KBFS_MOUNT} is mounted
+        def functional?
+          Local.running? && running? && mounted?
         end
 
         # @return [OpenStruct] a struct mapping of the contents of {KBFS_STATUS_FILE}
-        # @raise [Exceptions::KBFSNotRunningError] if KBFS is not mounted
+        # @raise [Exceptions::KBFSNotRunningError] if KBFS is not functional
         def status
-          raise Exceptions::KBFSNotRunningError unless mounted?
+          raise Exceptions::KBFSNotRunningError unless functional?
           JSON.parse File.read(KBFS_STATUS_FILE), object_class: OpenStruct
         end
       end

@@ -18,4 +18,5 @@ Gem::Specification.new do |s|
   s.license               = "MIT"
 
   s.add_runtime_dependency "keybase-unofficial-core", "~> 1.0"
+  s.add_runtime_dependency "sys-filesystem", "~> 1.1"
 end
