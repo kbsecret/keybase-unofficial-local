@@ -25,7 +25,7 @@ module Keybase
       CONFIG_HASH = JSON.parse(File.read(CONFIG_FILE)).freeze
 
       # The mountpoint for KBFS.
-      KBFS_MOUNT = "/keybase"
+      KBFS_MOUNT = File.realpath "/keybase"
 
       # @return [String] the currently logged-in user
       def current_user
