@@ -23,7 +23,7 @@ module Keybase
       STATUS_HASH = JSON.parse(`keybase status -j`)
 
       # The mountpoint for KBFS.
-      KBFS_MOUNT = File.realpath "/keybase"
+      KBFS_MOUNT = STATUS_HASH["KBFS"]["Mount"]
 
       # @return [String] the currently logged-in user
       def current_user
