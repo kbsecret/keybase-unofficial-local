@@ -17,5 +17,11 @@ module Keybase
     VERSION = "0.4.1"
 
     extend Config
+
+    # there's not much this library can do without keybase actually running
+    raise Exceptions::KeybaseNotRunningError unless running?
+
+    # ...or without a logged-in user
+    raise Exceptions::KeybaseNotLoggedInError unless logged_in?
   end
 end

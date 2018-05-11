@@ -16,26 +16,18 @@ module Keybase
                    end
 
       # The Keybase configuration file.
+      # @note This is not guaranteed to exist on disk.
       CONFIG_FILE = File.join(CONFIG_DIR, "config.json").freeze
 
-      # there's not much this library can do without a local config
-      raise Exceptions::KeybaseNotInstalledError unless File.file?(CONFIG_FILE)
-
-      # The hash from Keybase's configuration file.
-      CONFIG_HASH = JSON.parse(File.read(CONFIG_FILE)).freeze
+      # The Keybase status hash, obtained from `keybase status -j`.
+      STATUS_HASH = JSON.parse(`keybase status -j`)
 
       # The mountpoint for KBFS.
       KBFS_MOUNT = File.realpath "/keybase"
 
       # @return [String] the currently logged-in user
       def current_user
-        CONFIG_HASH["current_user"]
-      end
-
-      # @return [Array<Keybase::Local::User>] a list of all local users known
-      #  to Keybase
-      def local_users
-        CONFIG_HASH["users"].map { |_, v| User.new(v) }
+        STATUS_HASH["Username"]
       end
 
       # @return [String] the user's private KBFS directory
@@ -60,6 +52,10 @@ module Keybase
             File.read(comm).chomp == "keybase" rescue false # hooray for TOCTOU
           end
         end
+      end
+
+      def logged_in?
+        STATUS_HASH["LoggedIn"]
       end
 
       # @return [String] the running Keybase's version string

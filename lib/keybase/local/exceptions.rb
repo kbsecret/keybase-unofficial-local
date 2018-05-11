@@ -4,17 +4,17 @@ module Keybase
   module Local
     # A namespace for all exceptions defined by {Keybase::Local}.
     module Exceptions
-      # Raised if a Keybase installation can't be found.
-      class KeybaseNotInstalledError < Core::Exceptions::KeybaseError
-        def initialize
-          super "keybase needs to be installed"
-        end
-      end
-
       # Raised whenever Keybase is not running locally.
       class KeybaseNotRunningError < Core::Exceptions::KeybaseError
         def initialize
           super "keybase needs to be running"
+        end
+      end
+
+      # Raised whenever Keybase is running *without* a logged-in user.
+      class KeybaseNotLoggedInError < Core::Exceptions::KeybaseError
+        def initialize
+          super "a user needs to be logged in"
         end
       end
 
