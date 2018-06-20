@@ -78,18 +78,44 @@ module Keybase
           }
         end
 
-        # Send a message to a conversation.
+        # Send a message to a conversation. For team-based conversations, see {send_team_message}.
         # @param users [Array<String>] a list of the users in the conversation
         # @param message [String] the message to send
         # @param public [Boolean] whether to send the message to a public channel
+        # @param exploding_lifetime [String, nil] how long to wait before exploding the message,
+        #   or nil to not explode it
         # @return [OpenStruct] a struct mapping of the JSON response
         # @raise [Exceptions::ChatError] if the chat call fails
-        def send_message(users, message, public: false)
+        def send_message(users, message, public: false, exploding_lifetime: nil)
           chat_call :send, options: {
             channel: {
               name: Core::U[*users],
               public: public,
             },
+            exploding_lifetime: exploding_lifetime,
+            message: {
+              body: message,
+            },
+          }
+        end
+
+        # Send a message to a team-based conversation. For conversations between individual users,
+        # see {send_message}.
+        # @param team [String] the name of the team to which the conversation belongs
+        # @param topic [String] the conversation's topic
+        # @param message [String] the message to send
+        # @param exploding_lifetime [String, nil] how long to wait before exploding the message,
+        #  or nil to not explode it
+        # @return [OpenStruct] a struct mapping of the JSON response
+        # @raise [Exceptions::ChatError] if the chat call fails
+        def send_team_message(team, topic, message, exploding_lifetime: nil)
+          chat_call :send, options: {
+            channel: {
+              name: team,
+              members_type: "team",
+              topic_name: topic,
+            },
+            exploding_lifetime: exploding_lifetime,
             message: {
               body: message,
             },
