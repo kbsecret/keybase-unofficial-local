@@ -6,10 +6,10 @@ Gem::Specification.new do |s|
   s.name                  = "keybase-unofficial-local"
   s.version               = Keybase::Local::VERSION
   s.summary               = "keybase-unofficial-local - Unofficial library for Keybase clients"
-  s.description           = <<~EOS
+  s.description           = <<~DESCRIPTION
                               This library provides access to Keybase's desktop utility from
                               Ruby.
-                            EOS
+                            DESCRIPTION
   s.authors               = ["William Woodruff"]
   s.email                 = "william@tuffbizz.com"
   s.files                 = Dir["LICENSE", "*.md", ".yardopts", "lib/**/*"]
